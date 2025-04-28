@@ -1,0 +1,10 @@
+LICENSE
+README.md
+pyproject.toml
+src/pydantic_mongodb_validator/generator.py
+src/pydantic_mongodb_validator.egg-info/PKG-INFO
+src/pydantic_mongodb_validator.egg-info/SOURCES.txt
+src/pydantic_mongodb_validator.egg-info/dependency_links.txt
+src/pydantic_mongodb_validator.egg-info/requires.txt
+src/pydantic_mongodb_validator.egg-info/top_level.txt
+tests/test_generator.py

@@ -1,0 +1,137 @@
+Metadata-Version: 2.4
+Name: pydantic-mongodb-validator
+Version: 0.1.0
+Summary: A utility to convert Pydantic models into MongoDB $jsonSchema validators.
+Author-email: Your Name <your.email@example.com>
+License: MIT
+Keywords: pydantic,mongodb,jsonschema,validation,odm
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Database
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pydantic>=2.0
+Provides-Extra: test
+Requires-Dist: pytest; extra == "test"
+Requires-Dist: pymongo>=4.0; extra == "test"
+Dynamic: license-file
+
+# Pydantic MongoDB Validator
+
+[![PyPI version](https://img.shields.io/pypi/v/pydantic-mongodb-validator.svg)](https://pypi.org/project/pydantic-mongodb-validator/)
+[![Build Status](https://img.shields.io/travis/com/your_username/pydantic-mongodb-validator.svg)](https://travis-ci.com/your_username/pydantic-mongodb-validator)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+_(Note: Badges are placeholders)_
+
+## Overview
+
+`pydantic-mongodb-validator` is a Python utility that converts Pydantic models into MongoDB `$jsonSchema` validator dictionaries. This allows you to leverage Pydantic's powerful data validation capabilities directly within your MongoDB collections, ensuring data integrity at the database level.
+
+This package is primarily intended for Python developers using Pydantic for data modeling and MongoDB as their database.
+
+## Installation
+
+Install the package using pip:
+
+```bash
+pip install pydantic-mongodb-validator
+```
+
+_(Note: Package not yet published to PyPI)_
+
+## Basic Usage
+
+Here's a simple example demonstrating how to generate a MongoDB validator schema from a Pydantic model:
+
+```python
+from pydantic import BaseModel, Field
+from pydantic_mongodb_validator import generate_validator_schema
+from typing import Optional
+from bson import ObjectId # Required for MongoDB _id
+
+# Define your Pydantic model
+class MyModel(BaseModel):
+    id: ObjectId = Field(alias="_id") # Use alias for MongoDB's _id
+    name: str = Field(min_length=3, description="The name of the item")
+    age: Optional[int] = Field(None, ge=0, description="The age, must be non-negative")
+
+# Generate the MongoDB validator schema
+validator_schema = generate_validator_schema(MyModel)
+
+# Print the generated schema
+import json
+print(json.dumps(validator_schema, indent=2))
+
+# Example usage with pymongo (optional)
+# from pymongo import MongoClient
+#
+# client = MongoClient('mongodb://localhost:27017/')
+# db = client.my_database
+#
+# try:
+#     db.create_collection("my_collection", validator=validator_schema)
+#     print("Collection 'my_collection' created with validator.")
+# except Exception as e:
+#     print(f"Could not create collection: {e}") # Might fail if collection exists
+#     # If collection exists, you might want to update the validator:
+#     # db.command('collMod', 'my_collection', validator=validator_schema)
+
+```
+
+**Expected Output:**
+
+```json
+{
+  "$jsonSchema": {
+    "bsonType": "object",
+    "required": ["_id", "name"],
+    "properties": {
+      "_id": {
+        "bsonType": "objectId",
+        "description": "An alias for the document's _id"
+      },
+      "name": {
+        "bsonType": "string",
+        "description": "The name of the item",
+        "minLength": 3
+      },
+      "age": {
+        "bsonType": ["int", "null"],
+        "description": "The age, must be non-negative",
+        "minimum": 0
+      }
+    },
+    "additionalProperties": false
+  }
+}
+```
+
+## Features
+
+- **Basic Type Mapping:** Converts standard Python types (str, int, float, bool, list, dict, etc.) to corresponding BSON types.
+- **Pydantic Constraints:** Translates Pydantic field constraints (`min_length`, `max_length`, `ge`, `le`, `gt`, `lt`, `pattern`, etc.) into schema validation rules.
+- **Nested Models:** Handles nested Pydantic models, creating nested `object` schemas.
+- **Lists and Dictionaries:** Supports `List[...]` and `Dict[...]` types, generating `array` and `object` schemas with appropriate item/property validation.
+- **Optional Fields:** Correctly handles `Optional[...]` (or `Union[..., None]`) by allowing the type or `null`.
+- **Unions:** Supports `Union[...]` types by mapping to appropriate `bsonType` arrays or `anyOf` constructs where necessary.
+- **Specific Types:** Includes support for `Decimal` (as `decimal`), `UUID` (as `uuid`), `ObjectId` (as `objectId`).
+- **`json_schema_extra`:** Allows passing custom schema attributes via `Field(json_schema_extra={...})`.
+- **Alias Prioritization:** Uses field aliases (e.g., `alias='_id'`) for property names in the schema.
+- **Configuration:** Provides options to customize schema generation (e.g., `additionalProperties`).
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit issues or pull requests. (More detailed contribution guidelines will be added later).
+
+## License
+
+This project is licensed under the MIT License.
